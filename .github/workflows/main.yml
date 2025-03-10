@@ -28,7 +28,7 @@ jobs:
       run: |
         curl -o app.py "https://raw.githubusercontent.com/NitinBot001/Gemini/refs/heads/main/app.py"
         curl -o context.txt "https://raw.githubusercontent.com/NitinBot001/Unlimitedrdp/refs/heads/main/context.txt"
-        curl -o req.txt "https://raw.githubusercontent.com/NitinBot001/Gemini/refs/heads/main/req.txt""
+        curl -o req.txt "https://raw.githubusercontent.com/NitinBot001/Gemini/refs/heads/main/req.txt"
 
     - name: Install Python dependencies
       run: |
