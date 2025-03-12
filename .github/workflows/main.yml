@@ -51,8 +51,8 @@ jobs:
         GH_PAT: ${{ secrets.GH_PAT }}
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
-        # Start Flask service
-        python app.py > app.log 2>&1 &
+        # Start Flask service using Gunicorn with 4 workers
+        gunicorn -w 4 -b 0.0.0.0:5000 app:app > app.log 2>&1 &
 
         # Start tunnel
         npx nport -s ${{ steps.uid.outputs.instance_id }} -p 5000 > tunnel.log 2>&1 &
