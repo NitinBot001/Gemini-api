@@ -1,0 +1,103 @@
+name: AI Service Orchestrator
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-service]
+
+jobs:
+  service-instance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Generate unique ID
+      id: uid
+      run: |
+        UUID=$(uuidgen | cut -d'-' -f1)
+        echo "instance_id=cnnp-$UUID" >> $GITHUB_OUTPUT
+
+    - name: Setup environment
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Docker
+      run: |
+        # Remove any existing Docker packages to avoid conflicts
+        sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
+        # Update package index
+        sudo apt-get update
+        # Install required dependencies
+        sudo apt-get install -y \
+          ca-certificates \
+          curl \
+          gnupg \
+          lsb-release
+        # Add Docker's official GPG key
+        sudo mkdir -p /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        # Set up the Docker repository
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+          $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        # Update package index again
+        sudo apt-get update
+        # Install Docker
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+        # Add user to docker group
+        sudo usermod -aG docker $USER
+
+    - name: Clone Plant Disease Detection repo and build/run Docker
+      run: |
+        git clone https://github.com/NitinBot001/Plant_Disease_Detection.git
+        cd Plant_Disease_Detection
+        sudo docker build -t fastai-v3 .
+        sudo docker run -d -p 8080:8080 fastai-v3 &
+
+    - name: Install Node.js dependencies
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    - run: npm install -g nport
+
+    - name: Launch service cluster
+      env:
+        GH_PAT: ${{ secrets.GH_PAT }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        # Start tunnel
+        npx nport -s ${{ steps.uid.outputs.instance_id }} -p 8080 > tunnel.log 2>&1 &
+
+        # Wait for tunnel to establish and extract URL
+        sleep 10
+        TUNNEL_URL=$(grep -oP 'your domain is: \Khttps://gemini\S+' tunnel.log)
+        
+        echo "Extracted Tunnel URL: $TUNNEL_URL"
+
+        # Create instance.json file
+        echo "{ \"tunnel_url\": \"$TUNNEL_URL\" }" > instance.json
+
+        # Commit and push to the repository
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "github-actions"
+
+        git clone https://x-access-token:$GH_PAT@github.com/NitinBot001/Gemini.git repo
+        cd repo
+
+        mv ../instance.json instance.json
+        git add instance.json
+        git commit -m "Update tunnel URL to $TUNNEL_URL"
+        git push origin main
+
+        # Trigger next instance at 5.5 hours
+        (sleep 19800 && 
+        curl -X POST "https://api.github.com/repos/${{ github.repository }}/dispatches" \
+          -H "Authorization: Bearer $GH_PAT" \
+          -H "Accept: application/vnd.github.everest-preview+json" \
+          -d '{"event_type": "trigger-service"}') &
+
+        # Keep alive for full duration
+        sleep 21600
