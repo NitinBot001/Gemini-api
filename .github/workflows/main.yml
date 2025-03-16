@@ -57,17 +57,18 @@ jobs:
         	| sudo tee /etc/apt/sources.list.d/ngrok.list \
         	&& sudo apt update \
         	&& sudo apt install ngrok
+        
         # Start Flask service using Gunicorn with 4 workers
         ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
         gunicorn -w 4 -b 0.0.0.0:5000 app:app > app.log 2>&1 &
 
         # Start tunnel
-        ngrok http --url=informed-freely-shiner.ngrok-free.app 5000 > tunnel.log 2>&1 &
+        ngrok http 5000 > tunnel.log 2>&1 &
 
         # Wait for tunnel to establish and extract URL
         sleep 10
-        TUNNEL_URL= "https://informed-freely-shiner.ngrok-free.app"
-        
+        TUNNEL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+
         echo "Extracted Tunnel URL: $TUNNEL_URL"
 
         # Create instance.json file
@@ -94,3 +95,4 @@ jobs:
 
         # Keep alive for full duration
         sleep 21600
+
