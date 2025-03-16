@@ -44,7 +44,7 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-    - run: npm install -g nport
+    - run: npm install -g localtunnel
 
     - name: Launch service cluster
       env:
@@ -55,11 +55,11 @@ jobs:
         gunicorn -w 4 -b 0.0.0.0:5000 app:app > app.log 2>&1 &
 
         # Start tunnel
-        npx nport -s ${{ steps.uid.outputs.instance_id }} -p 5000 > tunnel.log 2>&1 &
+        npx localtunnel --subdomain ${{ steps.uid.outputs.instance_id }} --port 5000 --local_host http://127.0.0.1 --local_https true > tunnel.log 2>&1 &
 
         # Wait for tunnel to establish and extract URL
         sleep 10
-        TUNNEL_URL=$(grep -oP 'your domain is: \Khttps://gemini\S+' tunnel.log)
+        TUNNEL_URL=$(grep -oP 'your url is: \Khttps://gemini\S+' tunnel.log)
         
         echo "Extracted Tunnel URL: $TUNNEL_URL"
 
