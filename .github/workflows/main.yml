@@ -51,15 +51,22 @@ jobs:
         GH_PAT: ${{ secrets.GH_PAT }}
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
+        curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+        	| sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+        	&& echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
+        	| sudo tee /etc/apt/sources.list.d/ngrok.list \
+        	&& sudo apt update \
+        	&& sudo apt install ngrok
         # Start Flask service using Gunicorn with 4 workers
+        ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
         gunicorn -w 4 -b 0.0.0.0:5000 app:app > app.log 2>&1 &
 
         # Start tunnel
-        npx localtunnel --subdomain ${{ steps.uid.outputs.instance_id }} --port 5000 --local_host http://127.0.0.1 --local_https true > tunnel.log 2>&1 &
+        ngrok http --url=informed-freely-shiner.ngrok-free.app 5000 > tunnel.log 2>&1 &
 
         # Wait for tunnel to establish and extract URL
         sleep 10
-        TUNNEL_URL=$(grep -oP 'your url is: \Khttps://gemini\S+' tunnel.log)
+        TUNNEL_URL=$(grep -oP '\Khttps://\S+' tunnel.log)
         
         echo "Extracted Tunnel URL: $TUNNEL_URL"
 
