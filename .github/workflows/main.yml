@@ -58,17 +58,17 @@ jobs:
         	&& sudo apt update \
         	&& sudo apt install ngrok
         
-        # Start Flask service using Gunicorn with 4 workers
         ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+        
+        # Start Flask service and ngrok in background
         gunicorn -w 4 -b 0.0.0.0:5000 app:app > app.log 2>&1 &
-
-        # Start tunnel
+        GUNICORN_PID=$!
         ngrok http 5000 > tunnel.log 2>&1 &
+        NGROK_PID=$!
 
         # Wait for tunnel to establish and extract URL
         sleep 10
         TUNNEL_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-
         echo "Extracted Tunnel URL: $TUNNEL_URL"
 
         # Create instance.json file
@@ -80,19 +80,26 @@ jobs:
 
         git clone https://x-access-token:$GH_PAT@github.com/NitinBot001/Gemini.git repo
         cd repo
-
         mv ../instance.json instance.json
         git add instance.json
         git commit -m "Update tunnel URL to $TUNNEL_URL"
         git push origin main
 
-        # Trigger next instance at 5.5 hours
-        (sleep 19800 && 
+        # Trigger next instance and wait for confirmation
+        TRIGGER_TIME=19800  # 5.5 hours
+        sleep $TRIGGER_TIME
+        
+        # Trigger new instance
         curl -X POST "https://api.github.com/repos/${{ github.repository }}/dispatches" \
           -H "Authorization: Bearer $GH_PAT" \
           -H "Accept: application/vnd.github.everest-preview+json" \
-          -d '{"event_type": "trigger-service"}') &
-
-        # Keep alive for full duration
-        sleep 21600
-
+          -d '{"event_type": "trigger-service"}'
+        
+        # Wait briefly to ensure new instance is triggered
+        sleep 60
+        
+        # Cleanly stop current services
+        kill $GUNICORN_PID
+        kill $NGROK_PID
+        echo "Current cluster stopped after triggering new instance"
+        hsjs
