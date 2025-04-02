@@ -60,7 +60,7 @@ jobs:
 
         # Wait for tunnel to establish
         sleep 10
-        TUNNEL_URL="https://$LOCALTUNNEL_SUBDOMAIN.loca.lt"
+        TUNNEL_URL="https://$LOCALTUNNEL_SUBDOMAIN.nport.link"
         echo "Tunnel URL: $TUNNEL_URL"
         curl https://loca.lt/mytunnelpassword
 
