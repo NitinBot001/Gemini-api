@@ -44,7 +44,7 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-    - run: npm install -g localtunnel
+    - run: npm install -g nport
 
     - name: Launch service cluster
       env:
@@ -55,7 +55,7 @@ jobs:
         # Start Flask service and localtunnel in background
         gunicorn -w 4 -b 0.0.0.0:5000 app:app > app.log 2>&1 &
         GUNICORN_PID=$!
-        lt --port 5000 --subdomain $LOCALTUNNEL_SUBDOMAIN > tunnel.log 2>&1 &
+        nport -p 5000 -s $LOCALTUNNEL_SUBDOMAIN > tunnel.log 2>&1 &
         LOCALTUNNEL_PID=$!
 
         # Wait for tunnel to establish
