@@ -50,7 +50,7 @@ jobs:
       env:
         GH_PAT: ${{ secrets.GH_PAT }}
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        LOCALTUNNEL_SUBDOMAIN: "gemini-${{ steps.uid.outputs.instance_id }}"
+        LOCALTUNNEL_SUBDOMAIN: "${{ steps.uid.outputs.instance_id }}"
       run: |
         # Start Flask service and localtunnel in background
         gunicorn -w 4 -b 0.0.0.0:5000 app:app > app.log 2>&1 &
@@ -62,6 +62,7 @@ jobs:
         sleep 10
         TUNNEL_URL="https://$LOCALTUNNEL_SUBDOMAIN.loca.lt"
         echo "Tunnel URL: $TUNNEL_URL"
+        curl https://loca.lt/mytunnelpassword
 
         # Create instance.json file
         echo "{ \"tunnel_url\": \"$TUNNEL_URL\" }" > instance.json
