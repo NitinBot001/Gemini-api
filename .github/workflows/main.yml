@@ -61,14 +61,14 @@ jobs:
         GUNICORN_PID=$!
 
         # Start ngrok in background, using the specified edge
-        ngrok tunnel --label edge=$NGROK_EDGE_ID http://localhost:5000 > ngrok.log 2>&1 &
+        ngrok tunnel --label edge=edghts_2w04FluTBWJvcaoPT1oOV6HiVaf http://localhost:5000 > ngrok.log 2>&1 &
         NGROK_PID=$!
 
         # Wait for ngrok to establish the tunnel
         sleep 10
 
         # Attempt to extract the URL from the ngrok log file
-        TUNNEL_URL=$(grep "https://" ngrok.log | head -n 1 | awk '{print $6}') #adjust awk print number as necessary
+        TUNNEL_URL= "https://informed-freely-shiner.ngrok-free.app" #adjust awk print number as necessary
         echo "Tunnel URL: $TUNNEL_URL"
         if [ -z "$TUNNEL_URL" ]; then
           echo "Failed to retrieve ngrok URL from logs. Check ngrok.log for errors."
