@@ -27,6 +27,8 @@ jobs:
     - name: Create Python application
       run: |
         curl -o app.py "https://raw.githubusercontent.com/NitinBot001/Gemini/refs/heads/main/app.py"
+        mkdir static
+        mkdir templates
         curl -o static/context.txt "https://raw.githubusercontent.com/NitinBot001/Unlimitedrdp/refs/heads/main/static/context.txt"
         curl -o requirements.txt "https://raw.githubusercontent.com/NitinBot001/Gemini/refs/heads/main/requirements.txt"
         curl -o templates/index.html "https://raw.githubusercontent.com/NitinBot001/Unlimitedrdp/refs/heads/main/templates/index.html"
