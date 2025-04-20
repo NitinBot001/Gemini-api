@@ -70,16 +70,8 @@ jobs:
         # Wait for ngrok to establish the tunnel
         sleep 10
 
-        # Attempt to extract the URL from the ngrok log file
-        TUNNEL_URL= "https://informed-freely-shiner.ngrok-free.app" #adjust awk print number as necessary
-        echo "Tunnel URL: $TUNNEL_URL"
-        if [ -z "$TUNNEL_URL" ]; then
-          echo "Failed to retrieve ngrok URL from logs. Check ngrok.log for errors."
-          exit 1 # Exit the workflow if we can't get the URL.
-        fi
-
         # Create instance.json file
-        echo "{ \"tunnel_url\": \"$TUNNEL_URL\" }" > instance.json
+        echo "{ \"tunnel_url\": \"https://informed-freely-shiner.ngrok-free.app\" }" > instance.json
 
         # Commit and push to the repository
         git config --global user.email "github-actions@github.com"
@@ -89,7 +81,7 @@ jobs:
         cd repo
         mv ../instance.json instance.json
         git add instance.json
-        git commit -m "Update tunnel URL to $TUNNEL_URL"
+        git commit -m "Update tunnel URL to https://informed-freely-shiner.ngrok-free.app"
         git push origin main
 
         # Trigger next instance and wait for confirmation
